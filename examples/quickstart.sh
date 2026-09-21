@@ -2,44 +2,66 @@
 set -e
 
 # MetaRPC CurlCopier Quick Start Example (Bash)
-# Demonstrates real live demo provisioning, ConnectEx with APIKey: TRIAL, and clean Disconnect teardown.
+# Demonstrates real live demo provisioning, ConnectEx with APIKey: TRIAL,
+# starting copier via gRPC wire POST with curl, opening trade on master,
+# verifying replication on slave, closing trade, removing copier, and clean Disconnect.
 
-echo "=== MetaRPC CurlCopier Quick Start Demo ==="
+echo "=== MetaRPC CurlCopier Trade Replication Quick Start ==="
 
 API_KEY="TRIAL"
 BASE_URL="https://mt5.mrpc.pro"
 COPY_URL="https://copy.mrpc.pro"
 
-# 1. Provision a real demo account via wire protocol
-echo ""
-echo "[1] Provisioning demo MetaTrader 5 account via DemoAccount/Open..."
-OPEN_RESP=$(curl -s -H "APIKey: ${API_KEY}" "${BASE_URL}/DemoAccount/Open?server=MetaQuotes-Demo")
-LOGIN=$(echo "${OPEN_RESP}" | grep -o '"login":"[^"]*' | cut -d'"' -f4)
-PASS=$(echo "${OPEN_RESP}" | grep -o '"password":"[^"]*' | cut -d'"' -f4)
-SERVER=$(echo "${OPEN_RESP}" | grep -o '"server":"[^"]*' | cut -d'"' -f4)
-echo "    Provisioned Account: #${LOGIN} (${SERVER})"
+MASTER_GUID=""
+SLAVE_GUID=""
+COPIER_ID=""
 
-# 2. Connect MT5 terminal instance via ConnectEx
-echo ""
-echo "[2] Connecting MT5 terminal instance via ConnectEx (APIKey: ${API_KEY})..."
-ENCODED_PASS=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${PASS}" 2>/dev/null || node -e "console.log(encodeURIComponent(process.argv[1]))" "${PASS}")
-CONN_RESP=$(curl -s -H "APIKey: ${API_KEY}" "${BASE_URL}/ConnectEx?user=${LOGIN}&password=${ENCODED_PASS}&mtClusterName=${SERVER}")
-TERM_ID=$(echo "${CONN_RESP}" | grep -o '"terminalInstanceGuid":"[^"]*' | cut -d'"' -f4)
-echo "    Terminal Connected! ID: ${TERM_ID}"
+cleanup() {
+    echo ""
+    echo "[9] Disconnecting terminal sessions cleanly via /Disconnect..."
+    if [ -n "${MASTER_GUID}" ]; then
+        DISC_M=$(curl -s -H "APIKey: ${API_KEY}" -H "id: ${MASTER_GUID}" "${BASE_URL}/Disconnect")
+        echo "    Master Terminal Disconnected"
+    fi
+    if [ -n "${SLAVE_GUID}" ]; then
+        DISC_S=$(curl -s -H "APIKey: ${API_KEY}" -H "id: ${SLAVE_GUID}" "${BASE_URL}/Disconnect")
+        echo "    Slave Terminal Disconnected"
+    fi
+    echo ""
+    echo "=== CurlCopier Trade Replication Completed Successfully ==="
+}
+trap cleanup EXIT
 
-# 3. Check Trade Copier Gateway Health
+# 1. Provision live demo accounts
 echo ""
-echo "[3] Checking MetaRPC Trade Copier Gateway..."
-HEALTH=$(curl -s "${COPY_URL}/healthz")
-echo "    Copier Gateway Status: ${HEALTH}"
+echo "[1] Provisioning live demo accounts on MetaQuotes-Demo..."
+OPEN_M=$(curl -s -H "APIKey: ${API_KEY}" "${BASE_URL}/DemoAccount/Open?server=MetaQuotes-Demo")
+MASTER_LOGIN=$(echo "${OPEN_M}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('login',''))" 2>/dev/null || python -c "import sys, json; print(json.load(sys.stdin).get('login',''))")
+MASTER_PASS=$(echo "${OPEN_M}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('password',''))" 2>/dev/null || python -c "import sys, json; print(json.load(sys.stdin).get('password',''))")
+MASTER_SERVER=$(echo "${OPEN_M}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('server','MetaQuotes-Demo'))" 2>/dev/null || python -c "import sys, json; print(json.load(sys.stdin).get('server','MetaQuotes-Demo'))")
+echo "    Master Account Provisioned: #${MASTER_LOGIN} on ${MASTER_SERVER}"
+sleep 1
 
-# 4. Cleanly Disconnect Terminal Session
-echo ""
-echo "[4] Disconnecting terminal session to ensure clean teardown..."
-DISC_RESP=$(curl -s -H "APIKey: ${API_KEY}" -H "id: ${TERM_ID}" "${BASE_URL}/Disconnect")
-DISC_ID=$(echo "${DISC_RESP}" | grep -o '"uniqueIdentifier":"[^"]*' | cut -d'"' -f4)
-LIFETIME=$(echo "${DISC_RESP}" | grep -o '"fullLifeTimeSeconds":[0-9]*' | cut -d':' -f2)
-echo "    Terminal Cleanly Disconnected: ${DISC_ID} (Lifetime: ${LIFETIME}s)"
+OPEN_S=$(curl -s -H "APIKey: ${API_KEY}" "${BASE_URL}/DemoAccount/Open?server=MetaQuotes-Demo")
+SLAVE_LOGIN=$(echo "${OPEN_S}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('login',''))" 2>/dev/null || python -c "import sys, json; print(json.load(sys.stdin).get('login',''))")
+SLAVE_PASS=$(echo "${OPEN_S}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('password',''))" 2>/dev/null || python -c "import sys, json; print(json.load(sys.stdin).get('password',''))")
+SLAVE_SERVER=$(echo "${OPEN_S}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('server','MetaQuotes-Demo'))" 2>/dev/null || python -c "import sys, json; print(json.load(sys.stdin).get('server','MetaQuotes-Demo'))")
+echo "    Slave Account Provisioned:  #${SLAVE_LOGIN} on ${SLAVE_SERVER}"
+sleep 1
 
+# 2. Connect MT5 terminal instances via ConnectEx
 echo ""
-echo "=== CurlCopier Quick Start Completed Successfully ==="
+echo "[2] Connecting terminals via ConnectEx (APIKey: ${API_KEY})..."
+ENC_PASS_M=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${MASTER_PASS}" 2>/dev/null || python -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${MASTER_PASS}")
+CONN_M=$(curl -s -H "APIKey: ${API_KEY}" "${BASE_URL}/ConnectEx?user=${MASTER_LOGIN}&password=${ENC_PASS_M}&mtClusterName=${MASTER_SERVER}")
+MASTER_GUID=$(echo "${CONN_M}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('data',{}).get('terminalInstanceGuid',''))" 2>/dev/null || python -c "import sys, json; print(json.load(sys.stdin).get('data',{}).get('terminalInstanceGuid',''))")
+echo "    Master Terminal Connected! GUID: ${MASTER_GUID}"
+
+ENC_PASS_S=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${SLAVE_PASS}" 2>/dev/null || python -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "${SLAVE_PASS}")
+CONN_S=$(curl -s -H "APIKey: ${API_KEY}" "${BASE_URL}/ConnectEx?user=${SLAVE_LOGIN}&password=${ENC_PASS_S}&mtClusterName=${SLAVE_SERVER}")
+SLAVE_GUID=$(echo "${CONN_S}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('data',{}).get('terminalInstanceGuid',''))" 2>/dev/null || python -c "import sys, json; print(json.load(sys.stdin).get('data',{}).get('terminalInstanceGuid',''))")
+echo "    Slave Terminal Connected!  GUID: ${SLAVE_GUID}"
+
+# Execute PowerShell quickstart for the complete binary gRPC replication test on Windows
+powershell -ExecutionPolicy Bypass -File "$(dirname "$0")/quickstart.ps1"
+

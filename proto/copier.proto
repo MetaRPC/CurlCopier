@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+option csharp_namespace = "tradecopy.Grpc";
+
+package copier;
+
+// Trade copier operations over gRPC.
+//
+// This exists for one reason: the REST equivalents take the master's and slave's MT account
+// PASSWORDS as query parameters. A query string is written to the ingress log, to any proxy in
+// between, and to the browser's history — so every copier ever started has put two sets of live
+// trading credentials into plain-text logs. gRPC carries them in the request body over HTTP/2,
+// where nothing on the path records them.
+//
+// The REST endpoints are untouched and still serve copyfront. This is an additional transport for
+// the same operations, not a replacement, and it delegates to exactly the same implementation so
+// the two cannot drift.
+service CopierService {
+  // Start a copier. The only call that carries credentials.
+  rpc Start (StartRequest) returns (StartReply);
+
+  // Every copier belonging to a user. Never returns stored passwords — see CopierSummary.
+  rpc List (ListRequest) returns (ListReply);
+
+  // Pause or resume.
+  rpc Pause (PauseRequest) returns (SimpleReply);
+
+  // Remove a copier.
+  rpc Remove (RemoveRequest) returns (SimpleReply);
+}
+
+// A trading account to connect to.
+message Account {
+  // "MT4" or "MT5".
+  string type = 1;
+  uint64 user = 2;
+  string password = 3;
+  string server = 4;
+  // Optional display name; the server generates one if this is empty.
+  string name = 5;
+  // Optional terminal session id if already connected via ConnectEx
+  string id = 6;
+}
+
+message StartRequest {
+  // The caller's key. It is both the user the copier belongs to and the manager creating it —
+  // a self-service copier has the customer acting as their own manager.
+  string user_key = 1;
+  string manager_key = 2;
+
+  Account master = 3;
+  Account slave = 4;
+
+  // FixedLot | LotMultiplier | BalanceMultiplier | FixedBalanceMultiplier | EquityMultiplier
+  string risk_type = 5;
+  string risk_value = 6;             // decimal as a string: a double would round money
+  string fixed_master_balance = 7;   // required when risk_type is FixedBalanceMultiplier
+
+  bool copy_sl = 8;
+  bool copy_tp = 9;
+  bool copy_pending_orders = 10;
+  bool reverse_copy = 11;
+}
+
+message StartReply {
+  bool ok = 1;
+  string copier_id = 2;
+  // Set when ok is false. REST reports failure as HTTP 201 with an error body; gRPC does not
+  // inherit that, so a failed start is ok=false with a message the caller can show.
+  string error = 3;
+}
+
+message ListRequest {
+  string user_key = 1;
+}
+
+// What a copier looks like to whoever is allowed to see it.
+//
+// Deliberately NOT the full stored record. That record contains MasterPassword and SlavePassword,
+// and the REST /UserCopiers returns them in full — so every consumer has had to remember to strip
+// them. There is nowhere to put them here, which makes the safe outcome the default one.
+message CopierSummary {
+  string id = 1;
+  string master_type = 2;
+  uint64 master_user = 3;
+  string master_server = 4;
+  string slave_type = 5;
+  uint64 slave_user = 6;
+  string slave_server = 7;
+  string risk_type = 8;
+  string risk_value = 9;
+  bool paused = 10;
+  // Why it is paused, when it is. "Paused" on its own cannot tell a customer that the account
+  // their copier followed was deleted, and that is exactly the case they most need to see.
+  string pause_reason = 11;
+}
+
+message ListReply {
+  bool ok = 1;
+  repeated CopierSummary copiers = 2;
+  string error = 3;
+}
+
+message PauseRequest {
+  string user_key = 1;
+  string copier_id = 2;
+  bool paused = 3;
+}
+
+message RemoveRequest {
+  string user_key = 1;
+  string copier_id = 2;
+}
+
+message SimpleReply {
+  bool ok = 1;
+  string error = 2;
+}
