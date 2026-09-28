@@ -8,7 +8,7 @@ set -e
 
 echo "=== MetaRPC CurlCopier Trade Replication Quick Start ==="
 
-API_KEY="TRIAL"
+API_KEY="${1:-${MRPC_API_KEY:-TRIAL}}"
 BASE_URL="https://mt5.mrpc.pro"
 COPY_URL="https://copy.mrpc.pro"
 

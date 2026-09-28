@@ -16,7 +16,7 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "=== MetaRPC CurlCopier Trade Replication Quick Start ===" -ForegroundColor Cyan
 
-$apiKey = "TRIAL"
+$apiKey = if ($args[0]) { $args[0] } elseif ($env:MRPC_API_KEY) { $env:MRPC_API_KEY } else { "TRIAL" }
 $baseUrl = "https://mt5.mrpc.pro"
 $copyUrl = "https://copy.mrpc.pro"
 $scriptDir = $PSScriptRoot
