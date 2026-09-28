@@ -8,17 +8,55 @@ The official cURL guide and reference client for **MetaRPC Trade Copier** and **
 - **Terminal Lifecycle Management**: `ConnectEx` with mandatory `APIKey: TRIAL` authentication and clean `/Disconnect` session termination.
 - **Documentation**: Comprehensive MkDocs documentation site.
 
-## Quick Start
+## 🏃 How to Run Examples
 
-### PowerShell
-```powershell
-.\examples\quickstart.ps1
-```
-
-### Bash
+### 1. Clone Repo
 ```bash
-bash examples/quickstart.sh
+git clone https://github.com/MetaRPC/CurlCopier.git
+cd CurlCopier
 ```
+
+### 2. Run with Default TRIAL Key
+```bash
+# On Linux / macOS (Bash):
+bash examples/quickstart.sh
+
+# On Windows (PowerShell):
+powershell -ExecutionPolicy Bypass -File .\examples\quickstart.ps1
+
+# Or on Windows using runner script:
+.\run.bat
+```
+
+### 3. Run with Your Own API Key
+
+Pass your API key directly as an argument:
+```bash
+# Windows
+.\run.bat <YOUR_API_KEY>
+# or PowerShell:
+powershell -ExecutionPolicy Bypass -File .\examples\quickstart.ps1 <YOUR_API_KEY>
+
+# Linux / macOS
+bash examples/quickstart.sh <YOUR_API_KEY>
+```
+
+Or set the `MRPC_API_KEY` environment variable:
+```bash
+# Linux / macOS
+export MRPC_API_KEY="<YOUR_API_KEY>"
+bash examples/quickstart.sh
+
+# Windows PowerShell
+$env:MRPC_API_KEY="<YOUR_API_KEY>"
+.\run.bat
+
+# Windows CMD
+set MRPC_API_KEY=<YOUR_API_KEY>
+run.bat
+```
+
+---
 
 ## Protocol Examples
 
