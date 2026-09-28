@@ -20,11 +20,11 @@ cleanup() {
     echo ""
     echo "[9] Disconnecting terminal sessions cleanly via /Disconnect..."
     if [ -n "${MASTER_GUID}" ]; then
-        DISC_M=$(curl -s -H "APIKey: ${API_KEY}" -H "id: ${MASTER_GUID}" "${BASE_URL}/Disconnect")
+        DISC_M=$(curl -s -H "APIKey: ${API_KEY}" -H "id: ${MASTER_GUID}" -H "delete: true" "${BASE_URL}/Disconnect?delete=true")
         echo "    Master Terminal Disconnected"
     fi
     if [ -n "${SLAVE_GUID}" ]; then
-        DISC_S=$(curl -s -H "APIKey: ${API_KEY}" -H "id: ${SLAVE_GUID}" "${BASE_URL}/Disconnect")
+        DISC_S=$(curl -s -H "APIKey: ${API_KEY}" -H "id: ${SLAVE_GUID}" -H "delete: true" "${BASE_URL}/Disconnect?delete=true")
         echo "    Slave Terminal Disconnected"
     fi
     echo ""

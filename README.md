@@ -72,7 +72,11 @@ curl -s -H "APIKey: TRIAL" "https://mt5.mrpc.pro/ConnectEx?user=123456&password=
 
 ### 3. Disconnect Terminal
 ```bash
+# Gracefully stop terminal (delete=false by default)
 curl -s -H "APIKey: TRIAL" -H "id: <terminalInstanceGuid>" "https://mt5.mrpc.pro/Disconnect"
+
+# Permanently delete terminal session (delete=true for test teardown)
+curl -s -H "APIKey: TRIAL" -H "id: <terminalInstanceGuid>" -H "delete: true" "https://mt5.mrpc.pro/Disconnect?delete=true"
 ```
 
 ## Documentation

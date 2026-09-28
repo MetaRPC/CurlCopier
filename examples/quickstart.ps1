@@ -300,11 +300,11 @@ finally {
     # 9. Cleanly Disconnect Terminal Sessions
     Write-Host "`n[9] Disconnecting terminal sessions cleanly via /Disconnect..." -ForegroundColor Yellow
     if ($masterGuid) {
-        $discM = curl.exe -s -H "APIKey: $apiKey" -H "id: $masterGuid" "$baseUrl/Disconnect" | ConvertFrom-Json
+        $discM = curl.exe -s -H "APIKey: $apiKey" -H "id: $masterGuid" -H "delete: true" "$baseUrl/Disconnect?delete=true" | ConvertFrom-Json
         Write-Host "    Master Terminal Cleanly Disconnected: $($discM.data.uniqueIdentifier) (Lifetime: $($discM.data.fullLifeTimeSeconds)s)" -ForegroundColor Green
     }
     if ($slaveGuid) {
-        $discS = curl.exe -s -H "APIKey: $apiKey" -H "id: $slaveGuid" "$baseUrl/Disconnect" | ConvertFrom-Json
+        $discS = curl.exe -s -H "APIKey: $apiKey" -H "id: $slaveGuid" -H "delete: true" "$baseUrl/Disconnect?delete=true" | ConvertFrom-Json
         Write-Host "    Slave Terminal Cleanly Disconnected:  $($discS.data.uniqueIdentifier) (Lifetime: $($discS.data.fullLifeTimeSeconds)s)" -ForegroundColor Green
     }
     Write-Host "`n=== CurlCopier Trade Replication Completed Successfully ===" -ForegroundColor Cyan
