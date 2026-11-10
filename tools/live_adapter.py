@@ -1,11 +1,11 @@
 """Live cURL transport adapter; no credentials are placed in process arguments."""
 import sys,json,subprocess,os,uuid
-platform=os.getenv('COPIER_PLATFORM','MT5')
-if platform not in ('MT4','MT5'):raise ValueError('COPIER_PLATFORM must be MT4 or MT5')
+platforms={side:os.getenv('COPIER_'+side.upper()+'_PLATFORM',os.getenv('COPIER_PLATFORM','MT5')) for side in ['master','slave']}
+if any(p not in ('MT4','MT5','CT','TL') for p in platforms.values()):raise ValueError('COPIER_PLATFORM must be MT4, MT5, CT or TL')
 v=[sys.stdin.readline().rstrip('\r\n') for _ in range(13)]
 op=sys.argv[1];params={'userKey':v[1]}
 if op=='start':
- path='/Start';params.update(managerKey=v[1],masterType=platform,slaveType=platform,riskType=v[10],riskValue=v[11],fixedMasterBalance=v[12] or '0',copySL='true',copyTP='true',copyPendingOrders='false',copyExistingTrades='false')
+ path='/Start';params.update(managerKey=v[1],masterType=platforms['master'],slaveType=platforms['slave'],riskType=v[10],riskValue=v[11],fixedMasterBalance=v[12] or '0',copySL='true',copyTP='true',copyPendingOrders='false',copyExistingTrades='false')
  for role,i in [('master',2),('slave',6)]:params.update({role+'User':v[i],role+'Password':v[i+1],role+'Server':v[i+2],role+'ApiId':v[i+3],role+'Name':'SDK demo '+role})
 elif op=='list':path='/UserCopiers'
 elif op=='pause':path='/CopierPause';params.update(id=sys.argv[2],paused=sys.argv[3])
