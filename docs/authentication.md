@@ -8,7 +8,7 @@ Use your real **MetaRPC owner API key** for every SDK request. Keep it on your s
 | gRPC | `apikey` metadata on every call, plus `user_key` in the protobuf body | Customer RPCs validate the body owner key; Start also validates account ownership |
 | WebSocket | `ApiKey` on the HTTP upgrade request to `/OnTradeLog?id=...` | The copier ownership check runs before the upgrade |
 
-HTTP header names are case-insensitive. gRPC metadata keys are lowercase. The SDK sends `apikey`; cURL examples use `ApiKey`. They represent the same header.
+HTTP header names are case-insensitive. cURL examples send `ApiKey`; related gRPC clients use lowercase `apikey` metadata. They represent the same header.
 
 !!! important "The header does not replace request fields"
     `user_key` identifies the owner. `manager_key` identifies the creating manager and normally equals the owner's key for self-service use. A copier ID, terminal ID or broker login is **not** an API key. Keep the configured key and body identity consistent.

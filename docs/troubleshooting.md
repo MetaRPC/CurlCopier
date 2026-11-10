@@ -1,6 +1,6 @@
 # Errors, timeouts and recovery
 
-Check both transport errors (DNS, TLS, timeout, gRPC status) and application failures (`ok=false`). An empty list is meaningful only when the operation succeeded.
+Check transport errors (DNS, TLS, timeout and HTTP status) and application error objects (`code`/message, including HTTP 201). The acceptance adapter reports failures as `ok=false`. An empty list is meaningful only when the operation succeeded.
 
 | Symptom | Check |
 |---|---|

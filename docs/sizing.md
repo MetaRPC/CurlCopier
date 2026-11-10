@@ -32,6 +32,6 @@ These switches do not guarantee broker acceptance. Symbols, digits, minimum stop
 
 ## Advanced settings and wrapper scope
 
-The handwritten wrapper exposes Start, List, Pause and Remove. The current server also offers advanced settings and an Update RPC; this wrapper does not claim coverage of every service option. The bundled core proto is not an exhaustive copy of the latest server schema.
+The cURL examples and acceptance adapter cover REST Start, List, Pause and Remove. The server offers additional settings and routes; this guide does not claim live coverage of every option. The bundled core proto describes the related gRPC contract, not the REST query format.
 
 Review symbol mappings, limits, trading filters and equity protection in the control panel. Do not enable force-minimum-lot just to make a test pass: that can increase exposure.
