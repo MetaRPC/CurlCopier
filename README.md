@@ -22,7 +22,7 @@ Set `MRPC_API_KEY` to your real owner API key in your environment, then run:
 bash examples/quickstart.sh
 ```
 
-This List example is read-only: no account creation or trades. Java on Windows uses `;` instead of `:` in classpaths.
+This List example is read-only: no account creation or trades. 
 
 ## Authentication
 
