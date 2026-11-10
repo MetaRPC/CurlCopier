@@ -1,86 +1,35 @@
-# MetaRPC CurlCopier
+# MetaRPC cURL Trade Copier SDK
 
-The official cURL guide and reference client for **MetaRPC Trade Copier** and **MetaTrader Terminal API**.
+Authenticate, configure a master–follower relationship, inspect its state, pause and remove it.
 
-## Features
-- **cURL HTTP/REST Integration**: Direct API access via standard `curl` commands.
-- **Automated Demo Account Provisioning**: Wire-protocol demo account creation on demand.
-- **Terminal Lifecycle Management**: `ConnectEx` with mandatory `APIKey: TRIAL` authentication and clean `/Disconnect` session termination.
-- **Documentation**: Comprehensive MkDocs documentation site.
+**[Documentation](https://metarpc.github.io/CurlCopier/) · [Quickstart](https://metarpc.github.io/CurlCopier/quickstart/) · [Authentication](https://metarpc.github.io/CurlCopier/authentication/) · [API reference](https://metarpc.github.io/CurlCopier/reference/)**
 
-## 🏃 How to Run Examples
+## Install from source
 
-### 1. Clone Repo
+Requires cURL 7.76+ and Bash, or PowerShell 5.1+.
+
 ```bash
 git clone https://github.com/MetaRPC/CurlCopier.git
 cd CurlCopier
+curl --version
 ```
 
-### 2. Run with Default TRIAL Key
+## First request
+
+Set `MRPC_API_KEY` to your real owner API key in your environment, then run:
+
 ```bash
-# On Linux / macOS (Bash):
 bash examples/quickstart.sh
-
-# On Windows (PowerShell):
-powershell -ExecutionPolicy Bypass -File .\examples\quickstart.ps1
-
-# Or on Windows using runner script:
-.\run.bat
 ```
 
-### 3. Run with Your Own API Key
+This List example is read-only: no account creation or trades. Java on Windows uses `;` instead of `:` in classpaths.
 
-Pass your API key directly as an argument:
-```bash
-# Windows
-.\run.bat <YOUR_API_KEY>
-# or PowerShell:
-powershell -ExecutionPolicy Bypass -File .\examples\quickstart.ps1 <YOUR_API_KEY>
+## Authentication
 
-# Linux / macOS
-bash examples/quickstart.sh <YOUR_API_KEY>
-```
+Every SDK call sends `ApiKey` (`apikey` in gRPC metadata). The gRPC body also carries `user_key`; the header does not replace it. `TRIAL` is not an owner key. Read the [verified transport contract](https://metarpc.github.io/CurlCopier/authentication/).
 
-Or set the `MRPC_API_KEY` environment variable:
-```bash
-# Linux / macOS
-export MRPC_API_KEY="<YOUR_API_KEY>"
-bash examples/quickstart.sh
+## Scope and verification
 
-# Windows PowerShell
-$env:MRPC_API_KEY="<YOUR_API_KEY>"
-.\run.bat
+Core operations: REST routes; no language wrapper. Advanced server features are distinguished from the supported wrapper surface. Review legacy replication examples before using them with disposable demos. Standard tests need no broker credentials.
 
-# Windows CMD
-set MRPC_API_KEY=<YOUR_API_KEY>
-run.bat
-```
-
----
-
-## Protocol Examples
-
-### 1. Provision Demo Account
-```bash
-curl -s -H "APIKey: TRIAL" "https://mt5.mrpc.pro/DemoAccount/Open?server=MetaQuotes-Demo"
-```
-
-### 2. Connect Terminal
-```bash
-curl -s -H "APIKey: TRIAL" "https://mt5.mrpc.pro/ConnectEx?user=123456&password=demoPass&mtClusterName=MetaQuotes-Demo"
-```
-
-### 3. Disconnect Terminal
-```bash
-# Gracefully stop terminal (delete=false by default)
-curl -s -H "APIKey: TRIAL" -H "id: <terminalInstanceGuid>" "https://mt5.mrpc.pro/Disconnect"
-
-# Permanently delete terminal session (delete=true for test teardown)
-curl -s -H "APIKey: TRIAL" -H "id: <terminalInstanceGuid>" -H "delete: true" "https://mt5.mrpc.pro/Disconnect?delete=true"
-```
-
-## Documentation
-Documentation is powered by MkDocs Material. Build with:
-```bash
-mkdocs build
-```
+See [testing and contributing](https://metarpc.github.io/CurlCopier/testing/) for the regression suite, demo checklist and Pages build. Edit `docs/`; generated `site/` output is not source.
