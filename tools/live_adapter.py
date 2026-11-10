@@ -1,5 +1,5 @@
 """Live cURL transport adapter; no credentials are placed in process arguments."""
-import sys,json,subprocess,os
+import sys,json,subprocess,os,uuid
 v=[sys.stdin.readline().rstrip('\r\n') for _ in range(13)]
 op=sys.argv[1];params={'userKey':v[1]}
 if op=='start':
@@ -10,12 +10,19 @@ elif op=='pause':path='/CopierPause';params.update(id=sys.argv[2],paused=sys.arg
 elif op=='remove':path='/Remove';params.update(id=sys.argv[2],closeTrades='false')
 else:raise ValueError('Unknown operation')
 def quote(s):return json.dumps(s,ensure_ascii=True)
-config=['silent','show-error','get','max-time = 180','url = '+quote('https://'+v[0]+path),'header = '+quote('ApiKey: '+v[1])]
+config=['silent','show-error','get','max-time = 180','write-out = "\\n%{http_code}"','url = '+quote('https://'+v[0]+path),'header = "Accept: application/json"','header = '+quote('ApiKey: '+v[1])]
 config += ['data-urlencode = '+quote(k+'='+str(val)) for k,val in params.items()]
 r=subprocess.run([os.getenv('CURL','curl.exe' if os.name=='nt' else 'curl'),'--config','-'],input='\n'.join(config),text=True,capture_output=True)
 try:
  if r.returncode:raise RuntimeError('cURL transport failed: '+str(r.returncode))
- body=json.loads(r.stdout)
+ raw,status=r.stdout.rsplit('\n',1)
+ if not 200 <= int(status) < 300:raise RuntimeError('HTTP '+status)
+ try:body=json.loads(raw)
+ except json.JSONDecodeError:
+  # MVC can return text/plain for string results even on a successful request.
+  if op=='start':body=str(uuid.UUID(raw.strip()))
+  elif op in ('pause','remove') and raw.strip()=='OK':body='OK'
+  else:raise RuntimeError('Unexpected response format')
  if isinstance(body,dict) and (body.get('code') or body.get('error')):out={'ok':False,'error':body.get('code') or str(body.get('error'))}
  elif op=='list':
   if not isinstance(body,list):raise RuntimeError('Expected copier list')
