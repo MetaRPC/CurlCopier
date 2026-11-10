@@ -1,9 +1,11 @@
 """Live cURL transport adapter; no credentials are placed in process arguments."""
 import sys,json,subprocess,os,uuid
+platform=os.getenv('COPIER_PLATFORM','MT5')
+if platform not in ('MT4','MT5'):raise ValueError('COPIER_PLATFORM must be MT4 or MT5')
 v=[sys.stdin.readline().rstrip('\r\n') for _ in range(13)]
 op=sys.argv[1];params={'userKey':v[1]}
 if op=='start':
- path='/Start';params.update(managerKey=v[1],masterType='MT5',slaveType='MT5',riskType=v[10],riskValue=v[11],fixedMasterBalance=v[12] or '0',copySL='true',copyTP='true',copyPendingOrders='false',copyExistingTrades='false')
+ path='/Start';params.update(managerKey=v[1],masterType=platform,slaveType=platform,riskType=v[10],riskValue=v[11],fixedMasterBalance=v[12] or '0',copySL='true',copyTP='true',copyPendingOrders='false',copyExistingTrades='false')
  for role,i in [('master',2),('slave',6)]:params.update({role+'User':v[i],role+'Password':v[i+1],role+'Server':v[i+2],role+'ApiId':v[i+3],role+'Name':'SDK demo '+role})
 elif op=='list':path='/UserCopiers'
 elif op=='pause':path='/CopierPause';params.update(id=sys.argv[2],paused=sys.argv[3])
